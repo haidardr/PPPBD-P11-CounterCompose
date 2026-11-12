@@ -16,9 +16,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,11 +40,15 @@ fun CounterApp(
     viewModel: CounterViewModel = viewModel()
 ) {
     val counter by viewModel.counter
+    val name by viewModel.name
+
     CounterScreen(
         counter = counter,
+        name = name,
         onIncrement = { viewModel.increment() },
         onDecrement = { viewModel.decrement() },
         onReset = { viewModel.reset() },
+        onSaveName = { newName -> viewModel.saveName(newName) },
         modifier = modifier
     )
 }
@@ -48,11 +56,15 @@ fun CounterApp(
 @Composable
 fun CounterScreen(
     counter: Int,
+    name: String,
     onIncrement: () -> Unit,
     onDecrement: () -> Unit,
     onReset: () -> Unit,
+    onSaveName: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var inputName by rememberSaveable { mutableStateOf("") }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -67,6 +79,7 @@ fun CounterScreen(
         Spacer(modifier = Modifier.height(16.dp))
         CounterDisplay(
             value = counter,
+            name = name,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
@@ -77,11 +90,31 @@ fun CounterScreen(
             onIncrement = onIncrement,
             onReset = onReset
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedTextField(
+            value = inputName,
+            onValueChange = { inputName = it },
+            label = { Text("Nama") },
+            placeholder = { Text("Masukkan nama") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = { onSaveName(inputName) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Simpan")
+        }
     }
 }
 
 @Composable
-fun CounterDisplay(value: Int, modifier: Modifier = Modifier) {
+fun CounterDisplay(
+    value: Int,
+    name: String = "",
+    modifier: Modifier = Modifier
+) {
     Box(
         modifier = modifier.background(
             color = Color(0xFFF5F5F5),
@@ -97,11 +130,25 @@ fun CounterDisplay(value: Int, modifier: Modifier = Modifier) {
                 .align(Alignment.TopCenter)
                 .padding(top = 16.dp)
         )
-        Text(
-            text = value.toString(),
-            fontSize = 120.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+            Text(
+                text = value.toString(),
+                fontSize = if (name.isNotBlank()) 96.sp else 120.sp,
+                fontWeight = FontWeight.Bold
+            )
+            if (name.isNotBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = name,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF333333)
+                )
+            }
+        }
     }
 }
 
@@ -172,9 +219,11 @@ fun CounterScreenPreview() {
     CounterComposeTheme {
         CounterScreen(
             counter = 7,
+            name = "John Doe",
             onIncrement = {},
             onDecrement = {},
-            onReset = {}
+            onReset = {},
+            onSaveName = {}
         )
     }
 }
